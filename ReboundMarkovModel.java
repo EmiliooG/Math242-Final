@@ -10,6 +10,7 @@ public class ReboundMarkovModel {
         this.csvFile = csvFile;
     }
 
+    // function to count CSV file wins/losses based on trb counts
     public void initializeStates() {
         try (BufferedReader br = new BufferedReader(new FileReader(csvFile))) {
             br.readLine();
@@ -56,6 +57,7 @@ public class ReboundMarkovModel {
         }
     }
 
+    // function to calculate transition matrix probabilities
     public void initializeProbabilities(){
         String[] possibleStates = {"HW", "HL", "MW", "ML", "LW", "LL"};
         for (String from : possibleStates) {
@@ -85,17 +87,16 @@ public class ReboundMarkovModel {
                 writer.write("\n");
             }
 
-            System.out.println("Transition matrix written to transition_matrix_output.txt");
 
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
+    // function to calculate Laplace-smoothed transition matrix
     public void initializeLaplace() {
         String[] possibleStates = {"HW", "HL", "MW", "ML", "LW", "LL"};
     
-        // Step 1: Laplace-smooth all transitions with 1.0
         for (String from : possibleStates) {
             transitions.put(from, new HashMap<>());
             for (String to : possibleStates) {
@@ -103,14 +104,13 @@ public class ReboundMarkovModel {
             }
         }
     
-        // Step 2: Count observed transitions
         for (int i = 0; i < states.size() - 1; i++) {
             String from = states.get(i);
             String to = states.get(i + 1);
             transitions.get(from).put(to, transitions.get(from).get(to) + 1.0);
         }
     
-        // Step 3: Normalize to get probabilities
+        // normalizing matrix rows
         try (BufferedWriter writer = new BufferedWriter(new FileWriter("laplace_matrix_output.txt"))) {
             writer.write("Normalized Laplace-Smoothed Transition Matrix (From → To):\n");
             writer.write("    HW     HL     MW     ML     LW     LL\n");
@@ -121,16 +121,13 @@ public class ReboundMarkovModel {
     
                 writer.write(from + " ");
                 for (String to : possibleStates) {
-                    // Always safe: Laplace ensures all entries are nonzero
                     double prob = row.get(to) / rowSum;
-                    row.put(to, prob); // Overwrite counts with normalized probabilities
+                    row.put(to, prob); 
                     writer.write(String.format("%5.4f ", prob));
                 }
                 writer.write("\n");
             }
-    
-            System.out.println("Normalized transition matrix written to laplace_matrix_output.txt");
-    
+        
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -140,7 +137,7 @@ public class ReboundMarkovModel {
     public void computeLaplaceSteadyState(String[] states, int maxIterations, double tolerance, String outputFileName) {
         int n = states.length;
         double[] pi = new double[n];
-        Arrays.fill(pi, 1.0 / n);  // Start with uniform distribution
+        Arrays.fill(pi, 1.0 / n);  // start with vector of equal probabilities
     
         double[] piNext = new double[n];
     
@@ -151,13 +148,12 @@ public class ReboundMarkovModel {
     
                 for (int i = 0; i < n; i++) {
                     String fromState = states[i];
-                    // Use safe access in case something's missing
                     double prob = transitions.getOrDefault(fromState, new HashMap<>()).getOrDefault(toState, 0.0);
                     piNext[j] += pi[i] * prob;
                 }
             }
     
-            // Check for convergence
+            // convergence check
             double maxDiff = 0.0;
             for (int k = 0; k < n; k++) {
                 maxDiff = Math.max(maxDiff, Math.abs(piNext[k] - pi[k]));
@@ -166,11 +162,11 @@ public class ReboundMarkovModel {
                 break;
             }
     
-            // Copy back
+            
             System.arraycopy(piNext, 0, pi, 0, n);
         }
     
-        // Output to file
+        // write to file
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(outputFileName))) {
             writer.write("Steady-State Distribution (Laplace-smoothed):\n");
             for (int i = 0; i < n; i++) {
@@ -183,6 +179,7 @@ public class ReboundMarkovModel {
         }
     }
 
+    // parse CSV file and calculate prediction accuracy
     public void evaluatePredictionAccuracy(String[] possibleStates, String outputFileName) {
         int correct = 0;
         int total = 0;
@@ -224,14 +221,15 @@ public class ReboundMarkovModel {
         }
     }
 
+    // quick function to evaluate only guessing most frequent state
     public void evaluateNaiveBaselineAccuracy(String outputFileName) {
-        // Step 1: Count frequency of each state
+       
         Map<String, Integer> freq = new HashMap<>();
         for (String s : states) {
             freq.put(s, freq.getOrDefault(s, 0) + 1);
         }
     
-        // Step 2: Find the most common state
+        
         String mostFrequentState = null;
         int maxCount = 0;
         for (Map.Entry<String, Integer> entry : freq.entrySet()) {
@@ -241,7 +239,7 @@ public class ReboundMarkovModel {
             }
         }
     
-        // Step 3: Compare this prediction to the actual next state
+       
         int correct = 0;
         int total = 0;
         for (int i = 0; i < states.size() - 1; i++) {
@@ -254,7 +252,7 @@ public class ReboundMarkovModel {
     
         double accuracy = (double) correct / total;
     
-        // Output
+        
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(outputFileName))) {
             writer.write("Naive Baseline Accuracy:\n");
             writer.write("Most Frequent State: " + mostFrequentState + "\n");
@@ -266,10 +264,7 @@ public class ReboundMarkovModel {
     }
     
 
-    
-
-    
-
+    // main function to run the model
     public static void main(String[] args) {
         String csvFile = "duke2025.csv";
         ReboundMarkovModel model = new ReboundMarkovModel(csvFile);

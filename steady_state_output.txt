@@ -2,4 +2,12 @@ Steady-State Distribution (Laplace-smoothed):
 HW: 0.205526
 Expected Return Time: 4.865559
 HL: 0.096281
-Expected Return Time:
+Expected Return Time: 10.386248
+MW: 0.306533
+Expected Return Time: 3.262296
+ML: 0.082579
+Expected Return Time: 12.109566
+LW: 0.187560
+Expected Return Time: 5.331619
+LL: 0.121520
+Expected Return Time: 8.229070
