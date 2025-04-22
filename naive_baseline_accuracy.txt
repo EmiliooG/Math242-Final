@@ -1,0 +1,3 @@
+Naive Baseline Accuracy:
+Most Frequent State: MW
+Accuracy: 44.74% (17/38)
